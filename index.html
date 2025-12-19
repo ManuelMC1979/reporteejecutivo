@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte Ejecutivos ACHS</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --achs-primary: #007A33;
+            --achs-secondary: #6CBF0D;
+            --achs-dark: #333333;
+            --achs-light: #F4F7F6;
+            --white: #FFFFFF;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--achs-light);
+            color: var(--achs-dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Navigation */
+        header {
+            background-color: var(--white);
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            box-shadow: var(--shadow);
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--achs-primary);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: var(--achs-primary);
+            color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Main Layout */
+        main {
+            flex: 1;
+            padding: 30px 40px;
+            overflow-y: auto;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 25px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* KPI Cards */
+        .kpi-card {
+            background: var(--white);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            grid-column: span 4;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-left: 5px solid var(--achs-primary);
+            transition: transform 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .kpi-title {
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .kpi-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--achs-dark);
+        }
+
+        .kpi-footer {
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--achs-primary);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Charts Section */
+        .chart-container {
+            grid-column: span 12;
+            background: var(--white);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--achs-dark);
+        }
+
+        /* Table Section */
+        .table-container {
+            grid-column: span 12;
+            background: var(--white);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 15px;
+            background-color: #f8f9fa;
+            color: #666;
+            font-weight: 600;
+            border-bottom: 2px solid #eee;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover td {
+            background-color: #f9f9f9;
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-high {
+            background-color: #e6f4ea;
+            color: #1e7e34;
+        }
+
+        .status-mid {
+            background-color: #feefc3;
+            color: #b06000;
+        }
+
+        .status-low {
+            background-color: #fce8e6;
+            color: #c5221f;
+        }
+
+        @media (max-width: 1000px) {
+            .kpi-card {
+                grid-column: span 6;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .kpi-card {
+                grid-column: span 12;
+            }
+
+            header {
+                padding: 0 20px;
+            }
+
+            main {
+                padding: 20px;
+            }
+        }
+
+        /* Toggle Switch */
+        .view-controls {
+            grid-column: span 12;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .toggle-container {
+            background-color: #ddd;
+            padding: 5px;
+            border-radius: 30px;
+            display: flex;
+        }
+
+        .toggle-btn {
+            padding: 10px 30px;
+            border: none;
+            background: none;
+            border-radius: 25px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-btn.active {
+            background-color: var(--white);
+            color: var(--achs-primary);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-card {
+            background-color: var(--white);
+            width: 90%;
+            max-width: 500px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            background-color: var(--achs-primary);
+            color: var(--white);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 24px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .detail-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-weight: 700;
+            color: var(--achs-dark);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo-container">
+            <div class="logo-text">ACHS <span style="font-weight: 300; color: #666;">Salud</span></div>
+        </div>
+        <div class="header-controls">
+            <button onclick="generateTeamsReport()"
+                style="padding: 8px 16px; background-color: #444791; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                📋 Generar Reporte Teams
+            </button>
+            <div class="user-profile">
+                <span>Administrador</span>
+                <div class="user-avatar">AD</div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="dashboard-grid">
+            <!-- View Toggle -->
+            <div class="view-controls">
+                <div class="toggle-container">
+                    <button class="toggle-btn active" id="btn-tipif" onclick="switchView('tipif')">Porcentaje de
+                        Tipificaciones</button>
+                    <button class="toggle-btn" id="btn-epa" onclick="switchView('epa')">Transferencia a EPA</button>
+                </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="kpi-card">
+                <div class="kpi-title">Total Ejecutivos</div>
+                <div class="kpi-value" id="totalExec">0</div>
+                <div class="kpi-footer">▲ Activos hoy</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Total Llamadas</div>
+                <div class="kpi-value" id="totalCalls">0</div>
+                <div class="kpi-footer">En el periodo actual</div>
+            </div>
+            <div class="kpi-card" style="border-left-color: var(--achs-secondary);">
+                <div class="kpi-title" id="kpi3-title">Promedio Tipificación</div>
+                <div class="kpi-value" id="kpi3-value">0%</div>
+                <div class="kpi-footer" id="kpi3-footer">Meta: >95%</div>
+            </div>
+
+            <!-- Main Charts Row -->
+            <div class="chart-container" style="grid-column: span 8;">
+                <div class="section-header">
+                    <div class="section-title">Desempeño por Ejecutivo</div>
+                </div>
+                <div style="height: 350px;">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container" style="grid-column: span 4;">
+                <div class="section-header">
+                    <div class="section-title" id="compliance-title">Cumplimiento Meta (>95%)</div>
+                </div>
+                <div style="height: 350px; position: relative;">
+                    <canvas id="complianceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="table-container">
+                <div class="section-header">
+                    <div class="section-title">Detalle de Operación <span
+                            style="font-size: 12px; font-weight: 400; color: #666; margin-left: 10px;">(Click en fila
+                            para ver detalle)</span></div>
+                </div>
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Ejecutivo</th>
+                            <th style="text-align: right;">Q Llamadas</th>
+                            <th style="text-align: center;">% Tipificación</th>
+                            <th style="text-align: center;">% Transf EPA</th>
+                            <th style="text-align: center;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- JS will populate -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span id="modalName">Nombre Ejecutivo</span>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-row">
+                    <span class="detail-label">Total Llamadas:</span>
+                    <span class="detail-value" id="modalCalls">0</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">% Tipificación:</span>
+                    <span class="detail-value" id="modalTipif">0%</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">% Transferencia EPA:</span>
+                    <span class="detail-value" id="modalEPA">0%</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Estado Actual:</span>
+                    <span class="detail-value" id="modalStatus">-</span>
+                </div>
+                <div
+                    style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 14px; color: #555;">
+                    <strong style="display: block; margin-bottom: 5px;">Análisis Rápido:</strong>
+                    <span id="modalAnalysis">...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data from User Image
+        const rawData = [
+            { name: "Velasquez Perez María Loreto", calls: 251, tipif: 94.02, transfEPA: 89 },
+            { name: "Rodríguez Zenteno José Manuel", calls: 561, tipif: 94.83, transfEPA: 70 },
+            { name: "Castro Cáceres Marcia Nicole", calls: 398, tipif: 95.98, transfEPA: 88 },
+            { name: "Olivares González Maximiliano Alfonso", calls: 292, tipif: 96.23, transfEPA: 89 },
+            { name: "Méndez Pérez Nanci Zobeida", calls: 381, tipif: 96.59, transfEPA: 93 },
+            { name: "Salgado Tobar Melissa Aracelli", calls: 315, tipif: 97.14, transfEPA: 81 },
+            { name: "Hald Tello Katia Liza", calls: 376, tipif: 97.34, transfEPA: 84 },
+            { name: "Astudillo Marin Manuela Soledad", calls: 387, tipif: 97.67, transfEPA: 88 },
+            { name: "Penaillo Cartagena Alejandro Patricio", calls: 453, tipif: 98.01, transfEPA: 64 },
+            { name: "Araos Ovando Yanet Marion", calls: 459, tipif: 98.04, transfEPA: 86 },
+            { name: "Garcia Velasco Ataly Tatiana", calls: 369, tipif: 98.10, transfEPA: 72 },
+            { name: "Rodriguez Fernandez Daniela Paz", calls: 429, tipif: 98.14, transfEPA: 85 },
+            { name: "Orellana Mallea Ema Alejandra", calls: 282, tipif: 98.94, transfEPA: 79 },
+            { name: "Llancapichun Soto Johana Angelica", calls: 379, tipif: 98.94, transfEPA: 91 },
+            { name: "Monsalve Corvacho Manuel Alejandro", calls: 587, tipif: 99.32, transfEPA: 78 },
+            { name: "Góngora Zuleta Elsa Susana", calls: 435, tipif: 99.54, transfEPA: 90 },
+            { name: "Chacón Avilés Alejandra Daniela", calls: 540, tipif: 99.81, transfEPA: 86 }
+        ];
+
+        // 1. Calculate KPIs
+        const totalExecs = rawData.length;
+        const totalCalls = rawData.reduce((sum, item) => sum + item.calls, 0);
+        const avgTipifRaw = rawData.reduce((sum, item) => sum + item.tipif, 0) / totalExecs;
+
+        // Formatters
+        const fmtNum = new Intl.NumberFormat('es-CL');
+        const fmtPct = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 });
+
+        // Update DOM KPIs (Initial STATIC only, dynamic moved to switchView)
+        document.getElementById('totalExec').innerText = totalExecs;
+        document.getElementById('totalCalls').innerText = fmtNum.format(totalCalls);
+
+        // 2. Chart Configuration (Store instances to update later)
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        const performanceChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: rawData.map(d => d.name.split(' ')[0] + ' ' + d.name.split(' ')[2]), // Shortened names
+                datasets: [
+                    {
+                        label: 'Cantidad Llamadas',
+                        data: rawData.map(d => d.calls),
+                        backgroundColor: '#007A33',
+                        yAxisID: 'y',
+                        borderRadius: 4
+                    },
+                    {
+                        label: '% Tipificación',
+                        data: rawData.map(d => d.tipif),
+                        type: 'line',
+                        borderColor: '#6CBF0D',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#6CBF0D',
+                        pointRadius: 4,
+                        yAxisID: 'y1',
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 122, 51, 0.9)',
+                        padding: 10
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        grid: { display: false }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: { borderDash: [5, 5] },
+                        suggestedMin: 90,
+                        suggestedMax: 100
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+
+        // 2.5 New Compliance Chart (Real Data)
+        // Calculate dynamic data based on the 'tipif' column
+        const meta = 95;
+        const aboveMeta = rawData.filter(d => d.tipif >= meta).length;
+        const belowMeta = rawData.length - aboveMeta;
+
+        const ctx2 = document.getElementById('complianceChart').getContext('2d');
+        const complianceChart = new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: ['Cumple Meta', 'Bajo Meta'],
+                datasets: [{
+                    data: [0, 0], // Will be set by switchView
+                    backgroundColor: [
+                        '#007A33', // Green for Good
+                        '#d93025'  // Red for Bad
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { usePointStyle: true, padding: 20 }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                let label = context.label || '';
+                                let value = context.raw;
+                                let percentage = ((value / rawData.length) * 100).toFixed(1) + '%';
+                                return ` ${label}: ${value} Ejecutivos (${percentage})`;
+                            }
+                        }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+
+        // 3. Populate Table and Add Interaction
+        const tbody = document.querySelector('#dataTable tbody');
+        rawData.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.style.cursor = 'pointer';
+            tr.onclick = () => showModal(index); // Add click handler
+
+            // Status Logic
+            let statusClass = 'status-high';
+            let statusText = 'Excelente';
+
+            if (item.tipif < 95) {
+                statusClass = 'status-low';
+                statusText = 'Mejorar';
+            } else {
+                statusClass = 'status-high';
+                statusText = 'Meta Cumplida';
+            }
+
+            tr.innerHTML = `
+                <td style="font-weight: 500;">${item.name}</td>
+                <td style="text-align: right;">${item.calls}</td>
+                <td style="text-align: center;" class="col-tipif">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        ${fmtPct.format(item.tipif)}%
+                        <div style="width: 50px; height: 6px; background: #eee; border-radius: 3px; overflow: hidden;">
+                            <div style="width: ${item.tipif}%; height: 100%; background: ${item.tipif > 95 ? '#007A33' : '#d93025'};"></div>
+                        </div>
+                    </div>
+                </td>
+                <td style="text-align: center;" class="col-epa">${fmtPct.format(item.transfEPA)}%</td>
+                <td style="text-align: center;">
+                    <span class="status-badge" id="row-status-${index}">-</span>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Modal Logic
+        const modal = document.getElementById('detailModal');
+
+        function showModal(index) {
+            const exec = rawData[index];
+            document.getElementById('modalName').innerText = exec.name;
+            document.getElementById('modalCalls').innerText = fmtNum.format(exec.calls);
+            document.getElementById('modalTipif').innerText = fmtPct.format(exec.tipif) + '%';
+            document.getElementById('modalEPA').innerText = fmtPct.format(exec.transfEPA) + '%';
+
+            let statusText = 'Excelente';
+            let color = '#1e7e34';
+            let analysis = 'El ejecutivo cumple holgadamente con la meta de tipificación.';
+
+            if (exec.tipif < 95) {
+                statusText = 'Debe Mejorar';
+                color = '#c5221f';
+                analysis = 'El ejecutivo está bajo la meta del 95%. Se sugiere revisión de procedimientos.';
+            } else {
+                statusText = 'Meta Cumplida';
+                color = '#1e7e34';
+                analysis = 'El ejecutivo cumple con la meta de tipificación.';
+            }
+
+            const statusEl = document.getElementById('modalStatus');
+            statusEl.innerText = statusText;
+            statusEl.style.color = color;
+            document.getElementById('modalAnalysis').innerText = analysis;
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        // Close on background click
+        modal.onclick = (e) => {
+            if (e.target === modal) closeModal();
+        }
+
+        // --- View Logic ---
+        let currentMetric = 'tipif'; // 'tipif' or 'epa'
+
+        function switchView(metric) {
+            currentMetric = metric;
+
+            // 1. Update Buttons
+            document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(metric === 'tipif' ? 'btn-tipif' : 'btn-epa').classList.add('active');
+
+            // 2. Define Context Variables
+            let title = '';
+            let meta = 0;
+            let dataKey = '';
+            let metaText = '';
+
+            if (metric === 'tipif') {
+                title = 'Promedio Tipificación';
+                meta = 95;
+                dataKey = 'tipif';
+                metaText = '>95%';
+            } else {
+                title = 'Promedio Transf. EPA';
+                meta = 85;
+                dataKey = 'transfEPA';
+                metaText = '>85%';
+            }
+
+            // 3. Update KPI Card 3
+            const avgVal = rawData.reduce((sum, item) => sum + item[dataKey], 0) / totalExecs;
+            document.getElementById('kpi3-title').innerText = title;
+            document.getElementById('kpi3-value').innerText = fmtPct.format(avgVal) + '%';
+            document.getElementById('kpi3-footer').innerHTML = '<div style="font-weight: 800; font-size: 1.5em; color: #FFFFFF; background-color: #007A33; padding: 10px 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); display: inline-block; margin-top: 5px;">🎯 Meta: ' + metaText + '</div>';
+
+            // 4. Update Performance Chart
+            performanceChart.data.datasets[1].label = '% ' + (metric === 'tipif' ? 'Tipificación' : 'Transf EPA');
+            performanceChart.data.datasets[1].data = rawData.map(d => d[dataKey]);
+            performanceChart.data.datasets[1].yAxisID = 'y1'; // Ensure axis stays linked
+            performanceChart.update();
+
+            // 5. Update Compliance Chart
+            document.getElementById('compliance-title').innerText = `Cumplimiento Meta (${metaText})`;
+            const above = rawData.filter(d => d[dataKey] >= meta).length;
+            const below = rawData.length - above;
+
+            complianceChart.data.labels = [`Cumple Meta (${metaText})`, `Bajo Meta (<${meta}%)`];
+            complianceChart.data.datasets[0].data = [above, below];
+            complianceChart.update();
+
+            // 6. Update Table Columns and Status badges
+            const tipifCols = document.querySelectorAll('.col-tipif');
+            const epaCols = document.querySelectorAll('.col-epa');
+
+            // Header Logic (assuming fixed column indices: 2=Tipif, 3=EPA)
+            // Just toggling visibility of cells
+            tipifCols.forEach(el => el.style.display = metric === 'tipif' ? 'table-cell' : 'none');
+            epaCols.forEach(el => el.style.display = metric === 'epa' ? 'table-cell' : 'none');
+
+            // Also headers need classes
+            const ths = document.querySelectorAll('#dataTable th');
+            ths[2].style.display = metric === 'tipif' ? 'table-cell' : 'none'; // Tipif Header
+            ths[3].style.display = metric === 'epa' ? 'table-cell' : 'none';   // EPA Header
+
+            // Update Status Column per row
+            rawData.forEach((item, index) => {
+                const val = item[dataKey];
+                let statusText = 'Excelente';
+                let statusClass = 'status-high';
+
+                if (val < meta) {
+                    statusText = 'Mejorar';
+                    statusClass = 'status-low';
+                } else {
+                    statusText = 'Meta Cumplida';
+                    statusClass = 'status-high';
+                }
+
+                const badge = document.getElementById(`row-status-${index}`);
+                badge.className = `status-badge ${statusClass}`;
+                badge.innerText = statusText;
+            });
+        }
+
+        // Initialize default view
+        switchView('tipif');
+
+        // Teams Report Generator
+        function generateTeamsReport() {
+            const date = new Date().toLocaleDateString('es-CL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            // Build HTML Table string
+            let html = `
+                <div style="font-family: Calibri, sans-serif; color: #333;">
+                    <h3 style="color: #444791; margin-bottom: 5px;">📊 REPORTE DE GESTIÓN DIARIA</h3>
+                    <p style="margin: 0 0 10px 0;"><strong>📅 Fecha:</strong> ${date}</p>
+                    <p style="margin: 0;"><strong>🎯 Meta Tipificación:</strong> &gt;95% | <strong>🎯 Meta EPA:</strong> &gt;85%</p>
+                    <br>
+                    <table style="border-collapse: collapse; width: 100%; max-width: 600px; font-size: 14px;">
+                        <thead>
+                            <tr style="background-color: #f0f0f0;">
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Ejecutivo</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Llamadas</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">% Tipif</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">% EPA</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            rawData.forEach(d => {
+                const isTipifOk = d.tipif >= 95;
+                const isEpaOk = d.transfEPA >= 85;
+                const statusIcon = (isTipifOk && isEpaOk) ? "🟢" : (isTipifOk ? "⚠️" : "🔴");
+                const rowBg = (isTipifOk && isEpaOk) ? "#e6f4ea" : "#fff";
+
+                html += `
+                    <tr style="background-color: ${rowBg};">
+                        <td style="border: 1px solid #ddd; padding: 8px;">${d.name.split(' ')[0]} ${d.name.split(' ')[2]}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${d.calls}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${fmtPct.format(d.tipif)}%</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${fmtPct.format(d.transfEPA)}%</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${statusIcon}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                    <p style="font-size: 12px; color: #888; margin-top: 10px;">_Generado automáticamente desde Dashboard Ejecutivo_</p>
+                </div>
+            `;
+
+            // Create Blob and write to clipboard as HTML
+            const blobHtml = new Blob([html], { type: 'text/html' });
+            const blobText = new Blob([html.replace(/<[^>]+>/g, '')], { type: 'text/plain' }); // Fallback
+
+            const data = [new ClipboardItem({
+                'text/html': blobHtml,
+                'text/plain': blobText
+            })];
+
+            navigator.clipboard.write(data).then(() => {
+                alert("✅ Reporte copiado con FORMATO!\n\nPégalo en Teams para ver la tabla ordenada.");
+            }).catch(err => {
+                console.error('Error al copiar:', err);
+                alert("❌ Error al copiar. Tu navegador quizás no soporte copiado rico.");
+            });
+        }
+    </script>
+</body>
+
+</html>
+```
